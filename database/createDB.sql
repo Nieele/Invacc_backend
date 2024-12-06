@@ -44,11 +44,11 @@ CREATE TABLE IF NOT EXISTS Items (
 CREATE TABLE IF NOT EXISTS Items_metadata (
     item_id     int        PRIMARY KEY,
     create_at   timestamp  NOT NULL  DEFAULT current_timestamp,
-    created_by  int        NOT NULL,
+    create_by  int        NOT NULL,
     update_at   timestamp  NOT NULL  DEFAULT current_timestamp,
     update_by   int        NOT NULL,
     FOREIGN KEY (item_id)    REFERENCES Items(id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (created_by) REFERENCES Staff(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (create_by) REFERENCES Staff(id) ON DELETE CASCADE  ON UPDATE CASCADE,
     FOREIGN KEY (update_by)  REFERENCES Staff(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -92,10 +92,10 @@ CREATE TABLE IF NOT EXISTS Discounts (
 
 CREATE TABLE IF NOT EXISTS Discounts_metadata (
     discount_id  serial     PRIMARY KEY,
-    created_at   timestamp  NOT NULL  DEFAULT current_timestamp,
-    created_by   int        NOT NULL,
+    create_at   timestamp  NOT NULL  DEFAULT current_timestamp,
+    create_by   int        NOT NULL,
     FOREIGN KEY (discount_id) REFERENCES Discounts(id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (created_by)  REFERENCES Staff(id)     ON DELETE CASCADE ON UPDATE CASCADE
+    FOREIGN KEY (create_by)  REFERENCES Staff(id)     ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS ItemsDiscounts (
@@ -116,8 +116,8 @@ CREATE TABLE IF NOT EXISTS ItemsImages (
 
 CREATE TABLE IF NOT EXISTS ItemsImages_metadata (
     id  serial             PRIMARY KEY,
-    created_at  timestamp  NOT NULL,
-    created_by  int        NOT NULL,
+    create_at  timestamp  NOT NULL,
+    create_by  int        NOT NULL,
     FOREIGN KEY (id) REFERENCES ItemsImages(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
