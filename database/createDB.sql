@@ -17,10 +17,10 @@ CREATE TABLE IF NOT EXISTS StaffPositions (
 CREATE TABLE IF NOT EXISTS Staff (
     id            serial       PRIMARY KEY,
     username      varchar(50)  NOT NULL  UNIQUE,
-    full_name     varchar(50)  NOT NULL,
-    email         varchar(50)  NOT NULL  UNIQUE,
+    full_name     varchar(50)  NULL,
+    email         varchar(50)  NULL  UNIQUE,
     phone         varchar(50)  NULL,
-    position      int          NOT NULL,
+    position      int          NULL,
     warehouse_id  int          NULL,
     active        boolean      NOT NULL  DEFAULT TRUE,  
     FOREIGN KEY (position)     REFERENCES StaffPositions(id) ON DELETE RESTRICT ON UPDATE CASCADE,
@@ -588,16 +588,16 @@ BEFORE DELETE ON Rent
 FOR EACH ROW
 EXECUTE FUNCTION add_rent_history();
 
--- add new users to the UserWarehouse from postgres tables
-CREATE OR REPLACE FUNCTION update_user_warehouse()
+-- add new users to the Staff from postgres tables
+CREATE OR REPLACE FUNCTION update_staff()
 RETURNS VOID AS $$
 BEGIN
-    INSERT INTO UserWarehouse (username, warehouse_id)
+    INSERT INTO Staff (username, warehouse_id)
     SELECT usename, NULL
     FROM pg_user
-    WHERE usename NOT IN (SELECT uw.username FROM UserWarehouse uw) AND usename NOT IN ('postgres', 'register');
+    WHERE usename NOT IN (SELECT username FROM Staff) AND usename NOT IN ('postgres', 'register');
 
-    DELETE FROM UserWarehouse
+    DELETE FROM Staff
     WHERE username NOT IN (SELECT usename FROM pg_user);
 END;
 $$ LANGUAGE plpgsql;
