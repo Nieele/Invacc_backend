@@ -309,6 +309,9 @@ BEGIN
         RAISE EXCEPTION 'Cannot transfer item item_id %, it is already transfer to another warehouse.', NEW.item_id;
     END IF;
 
+    -- set default status 'created'
+    NEW.status = (SELECT id FROM WarehouseTransferStatus WHERE status = 'created');
+
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -319,29 +322,11 @@ FOR EACH ROW
 EXECUTE FUNCTION prevent_add_transfer();
 
 
--- Set status 'create' before insert record in the WarehouseTransfer
-CREATE OR REPLACE FUNCTION setup_status_warehouse_transfer()
-RETURNS TRIGGER AS $$
-DECLARE
-    create_status int := (SELECT id FROM WarehouseTransferStatus WHERE status = 'create'); 
-BEGIN
-    NEW.status = create_status;
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trg_setup_status_warehouse_transfer
-BEFORE INSERT ON WarehouseTransfer
-FOR EACH ROW
-EXECUTE FUNCTION setup_status_warehouse_transfer();
-
-
 -- Creating of a record in the WarehousesOrdersHistory after insert to WarehousesOrders
 CREATE OR REPLACE FUNCTION add_warehouse_transfer_history()
 RETURNS TRIGGER AS $$
 BEGIN
-    INSERT INTO WarehouseTransferHistory(item_id, source_warehouse_id, destination_warehouse_id, sending_time, receiving_time, uuid_delivery)
+    INSERT INTO WarehouseTransferHistory(item_id, source_warehouse_id, destination_warehouse_id, sending_time, receiving_time, status, uuid_delivery)
     VALUES (
                 NEW.item_id,
                 (SELECT warehouse_id FROM Items WHERE id = NEW.item_id),
@@ -632,6 +617,8 @@ CREATE OR REPLACE FUNCTION create_customers_metadata()
 RETURNS TRIGGER AS $$
 BEGIN
     INSERT INTO Customers_metadata(id) VALUES (NEW.id);
+
+    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -648,12 +635,14 @@ BEGIN
     UPDATE Customers_metadata
     SET update_at = current_timestamp
     WHERE id = NEW.id;
+
+    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
 
 CREATE TRIGGER trg_update_customers_metadata
-AFTER INSERT ON Customers
+AFTER UPDATE ON Customers
 FOR EACH ROW
 EXECUTE FUNCTION update_customers_metadata();
 
@@ -669,8 +658,10 @@ RETURNS TRIGGER AS $$
 DECLARE
     staff_id int := (SELECT id FROM Staff WHERE username = current_user);
 BEGIN
-    INSERT INTO Customers_metadata(id, create_by)
+    INSERT INTO Discounts_metadata(discount_id, create_by)
     VALUES (NEW.id, staff_id);
+
+    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -687,14 +678,16 @@ RETURNS TRIGGER AS $$
 DECLARE
     staff_id int := (SELECT id FROM Staff WHERE username = current_user);
 BEGIN
-    INSERT INTO ItemsImages_metadata(id, create_by)
+    INSERT INTO ItemsImages_metadata(item_id, create_by)
     VALUES (NEW.id, staff_id);
+
+    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
 
 CREATE TRIGGER trg_create_items_images_metadata
-AFTER INSERT ON Discounts
+AFTER INSERT ON ItemsImages
 FOR EACH ROW
 EXECUTE FUNCTION create_items_images_metadata();
 
