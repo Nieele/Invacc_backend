@@ -42,13 +42,13 @@ CREATE TABLE IF NOT EXISTS Items (
 );
 
 CREATE TABLE IF NOT EXISTS Items_metadata (
-    item_id     int        PRIMARY KEY,
+    item_id     serial     PRIMARY KEY,
     create_at   timestamp  NOT NULL  DEFAULT current_timestamp,
-    create_by  int        NOT NULL,
+    create_by   int        NOT NULL,
     update_at   timestamp  NOT NULL  DEFAULT current_timestamp,
     update_by   int        NOT NULL,
     FOREIGN KEY (item_id)    REFERENCES Items(id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (create_by) REFERENCES Staff(id) ON DELETE CASCADE  ON UPDATE CASCADE,
+    FOREIGN KEY (create_by)  REFERENCES Staff(id) ON DELETE CASCADE  ON UPDATE CASCADE,
     FOREIGN KEY (update_by)  REFERENCES Staff(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -115,7 +115,7 @@ CREATE TABLE IF NOT EXISTS ItemsImages (
 );
 
 CREATE TABLE IF NOT EXISTS ItemsImages_metadata (
-    id  serial             PRIMARY KEY,
+    id         serial     PRIMARY KEY,
     create_at  timestamp  NOT NULL,
     create_by  int        NOT NULL,
     FOREIGN KEY (id) REFERENCES ItemsImages(id) ON DELETE CASCADE ON UPDATE CASCADE
@@ -197,6 +197,16 @@ CREATE TABLE IF NOT EXISTS WarehouseTransfer (
     FOREIGN KEY (item_id)                  REFERENCES Items (id)                   ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (destination_warehouse_id) REFERENCES Warehouses (id)              ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (status)                   REFERENCES WarehouseTransferStatus(id)  ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS WarehouseTransfer_metadata (
+    warehouse_transfer_id serial     PRIMARY KEY,
+    create_at             timestamp  NOT NULL  DEFAULT current_timestamp,
+    create_by             int        NOT NULL,
+    update_at             timestamp  NOT NULL  DEFAULT current_timestamp,
+    update_by             int        NOT NULL,
+    FOREIGN KEY (create_by) REFERENCES Staff(id) ON DELETE SET NULL ON UPDATE CASCADE,
+    FOREIGN KEY (update_by) REFERENCES Staff(id) ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS WarehouseTransferHistory (
