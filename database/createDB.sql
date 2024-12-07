@@ -463,7 +463,7 @@ BEGIN
     END IF;
 
     -- the item has been transfer
-    IF EXISTS (SELECT * FROM WarehousesTransfer WHERE item_id = NEW.item_id) THEN
+    IF EXISTS (SELECT * FROM WarehouseTransfer WHERE item_id = NEW.item_id) THEN
         RAISE EXCEPTION 'Cannot rent item_id %, it is currently transfer.', NEW.item_id;
     END IF;
 
@@ -747,5 +747,120 @@ INSERT INTO pgagent.pga_schedule(
 ) RETURNING jscid INTO scid;
 END
 $$;
+
+
+-- Create roles --
+
+-- register
+DO $$
+BEGIN
+    CREATE ROLE register;
+EXCEPTION
+    WHEN duplicate_object THEN
+        RAISE NOTICE 'Role register already exists, skipping creation.';
+END $$;
+ ALTER ROLE register WITH NOSUPERUSER NOINHERIT CREATEROLE NOCREATEDB LOGIN NOREPLICATION NOBYPASSRLS PASSWORD 'password';
+
+
+-- unknown
+DO $$
+BEGIN
+    CREATE ROLE unknown;
+EXCEPTION
+    WHEN duplicate_object THEN
+        RAISE NOTICE 'Role unknown already exists, skipping creation.';
+END $$;
+ ALTER ROLE unknown WITH NOSUPERUSER NOINHERIT NOCREATEROLE NOCREATEDB NOLOGIN NOREPLICATION NOBYPASSRLS;
+
+
+-- worker
+DO $$
+BEGIN
+    CREATE ROLE worker;
+EXCEPTION
+    WHEN duplicate_object THEN
+        RAISE NOTICE 'Role worker already exists, skipping creation.';
+END $$;
+ ALTER ROLE worker WITH NOSUPERUSER INHERIT NOCREATEROLE NOCREATEDB NOLOGIN NOREPLICATION NOBYPASSRLS;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE    Rent, Customers                                                TO worker;
+GRANT SELECT, INSERT                 ON TABLE    RentHistory                                                    TO worker;
+GRANT USAGE, SELECT                  ON SEQUENCE rent_id_seq, customers_id_seq, renthistory_id_seq              TO worker;
+GRANT SELECT                         ON TABLE    Items, ItemsCategories, Categories, ItemsDiscounts, Discounts, 
+                                                 ItemsImages, Warehouses, Staff, StaffPositions                 TO worker;
+
+
+-- inventory_manager
+DO $$
+BEGIN
+    CREATE ROLE inventory_manager;
+EXCEPTION
+    WHEN duplicate_object THEN
+        RAISE NOTICE 'Role inventory_manager already exists, skipping creation.';
+END $$;
+ ALTER ROLE inventory_manager WITH NOSUPERUSER INHERIT NOCREATEROLE NOCREATEDB NOLOGIN NOREPLICATION NOBYPASSRLS;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE    WarehouseTransfer, ItemsCategories, Categories                          TO inventory_manager;
+GRANT SELECT, INSERT, UPDATE         ON TABLE    WarehouseTransferHistory, Items, ItemsServiceHistory                    TO inventory_manager;
+GRANT SELECT, INSERT                 ON TABLE    Items_metadata, ItemsServiceHistory_metadata                            TO inventory_manager;
+GRANT USAGE, SELECT                  ON SEQUENCE warehousetransfer_id_seq, warehousetransferhistory_id_seq, 
+                                                 categories_id_seq, items_id_seq, items_metadata_item_id_seq, 
+                                                 itemsservicehistory_id_seq, itemsservicehistory_metadata_service_id_seq TO inventory_manager;
+GRANT SELECT                         ON TABLE    Staff, StaffPositions, RentHistory, Rent                                TO inventory_manager;
+
+
+-- marketing_specialist
+DO $$
+BEGIN
+    CREATE ROLE marketing_specialist;
+EXCEPTION
+    WHEN duplicate_object THEN
+        RAISE NOTICE 'Role marketing_specialist already exists, skipping creation.';
+END $$;
+ ALTER ROLE marketing_specialist WITH NOSUPERUSER INHERIT NOCREATEROLE NOCREATEDB NOLOGIN NOREPLICATION NOBYPASSRLS;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE    ItemsDiscounts, Discounts                                TO marketing_specialist;
+GRANT USAGE, SELECT                  ON SEQUENCE discounts_id_seq                                         TO marketing_specialist;
+GRANT SELECT                         ON TABLE    Items, ItemsCategories, Categories, ItemsServiceHistory, 
+                                                 Warehouses, WarehouseTransfer, WarehouseTransferHistory, 
+                                                 Rent, RentHistory                                        TO marketing_specialist;
+
+
+-- director
+DO $$
+BEGIN
+    CREATE ROLE director;
+EXCEPTION
+    WHEN duplicate_object THEN
+        RAISE NOTICE 'Role director already exists, skipping creation.';
+END $$;
+ ALTER ROLE director WITH NOSUPERUSER INHERIT NOCREATEROLE NOCREATEDB NOLOGIN NOREPLICATION NOBYPASSRLS;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE    Warehouses, Staff, StaffPositions                        TO director;
+GRANT USAGE, SELECT                  ON SEQUENCE warehouses_id_seq, staff_id_seq, staffpositions_id_seq   TO director;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO director;
+
+
+-- moderator
+DO $$
+BEGIN
+    CREATE ROLE moderator;
+EXCEPTION
+    WHEN duplicate_object THEN
+        RAISE NOTICE 'Role moderator already exists, skipping creation.';
+END $$;
+ ALTER ROLE moderator WITH NOSUPERUSER INHERIT CREATEROLE NOCREATEDB NOLOGIN NOREPLICATION NOBYPASSRLS;
+GRANT unknown, worker, inventory_manager, marketing_specialist      TO moderator WITH ADMIN OPTION;
+
+
+-- admin
+DO $$
+BEGIN
+    CREATE ROLE admin;
+EXCEPTION
+    WHEN duplicate_object THEN
+        RAISE NOTICE 'Role admin already exists, skipping creation.';
+END $$;
+ ALTER ROLE admin WITH SUPERUSER CREATEDB CREATEROLE REPLICATION BYPASSRLS NOLOGIN;
+
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO admin;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO admin;
+GRANT ALL PRIVILEGES ON SCHEMA public TO admin;
 
 END;
