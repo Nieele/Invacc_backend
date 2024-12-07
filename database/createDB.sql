@@ -162,6 +162,7 @@ CREATE TABLE IF NOT EXISTS Rent (
     customer_id      int            NOT NULL,
     start_rent_time  timestamp      NOT NULL  DEFAULT current_timestamp,
     end_rent_time    timestamp      NOT NULL,
+    overdue          boolean        NOT NULL  DEFAULT FALSE,
     total_payments   decimal(10,2)  NOT NULL,
     FOREIGN KEY (item_id)      REFERENCES Items (id)      ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (customer_id)  REFERENCES Customers (id)  ON DELETE RESTRICT ON UPDATE CASCADE,
